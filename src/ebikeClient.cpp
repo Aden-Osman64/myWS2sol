@@ -2,8 +2,25 @@
 #include <fstream>
 #include <string>
 #include <memory>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 #include "hal/CSVHALManager.h"
 #include "GPSSensor.h"
+
+std::string getCurrentTimestamp() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    std::tm* tm_ptr = std::localtime(&now_time);
+    std::ostringstream oss;
+    oss << "[" << (tm_ptr->tm_year + 1900) << "-"
+        << std::setw(2) << std::setfill('0') << (tm_ptr->tm_mon + 1) << "-"
+        << std::setw(2) << std::setfill('0') << tm_ptr->tm_mday << " "
+        << std::setw(2) << std::setfill('0') << tm_ptr->tm_hour << ":"
+        << std::setw(2) << std::setfill('0') << tm_ptr->tm_min << ":"
+        << std::setw(2) << std::setfill('0') << tm_ptr->tm_sec << "]";
+    return oss.str();
+}
 
 int main(int argc, char* argv[]) {
     // Check command line arguments
@@ -34,21 +51,24 @@ int main(int argc, char* argv[]) {
             try {
                 // Read data from the sensor
                 std::vector<uint8_t> reading = halManager.read(portNumber);
-
+                
                 // Convert byte vector to string for GPS reading
                 std::string readingStr;
                 for (uint8_t byte : reading) {
                     readingStr += static_cast<char>(byte);
                 }
 
-                // Connect sensor with the reading
-                if (gpsSensor->connect(readingStr)) {
-                    // Print the actual GPS data (timestamp + coordinates)
-                    std::cout << gpsSensor->read() << std::endl;
+                // Extract timestamp and coordinates
+                size_t delimiterPos = readingStr.find(';');
+                if (delimiterPos != std::string::npos) {
+                    std::string timestamp = getCurrentTimestamp();
+                    std::string coordinates = readingStr.substr(0, delimiterPos) + ", " + readingStr.substr(delimiterPos + 1);
+                    
+                    std::cout << timestamp << " | GPS: " << coordinates << std::endl;
                 } else {
-                    std::cerr << "Failed to connect reading " << readCount << std::endl;
+                    std::cerr << "Invalid GPS data format in reading " << readCount << std::endl;
                 }
-
+                
                 readCount++;
             }
             catch (const std::out_of_range& e) {
