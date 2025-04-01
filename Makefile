@@ -14,23 +14,29 @@ LIBS = -L$(LIB_DIR) -lwebserver -L$(POCO_DIR)/lib -lPocoNet -lPocoUtil -lPocoFou
 LDFLAGS = -Wl,-rpath,$(POCO_DIR)/lib
 
 # Target executables
-SERVER_TARGET = ebikeGateway
+SERVER_TARGET = ebikeGateaway
+CLIENT_TARGET = ebikeClient
 
 # Source files
-SERVER_SRCS = $(wildcard $(SRC_DIR)/ebikeGateway.cpp)
+SERVER_SRCS = $(wildcard $(SRC_DIR)/ebikeGateaway.cpp)
+CLIENT_SRCS = $(wildcard $(SRC_DIR)/ebikeClient.cpp)
 
 # Object files
 SERVER_OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SERVER_SRCS))
+CLIENT_OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(CLIENT_SRCS))
 
 # Build rules
-all: $(BUILD_DIR) $(SERVER_TARGET)
+all: $(BUILD_DIR) $(SERVER_TARGET) $(CLIENT_TARGET)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(BUILD_DIR)/web
 
 $(SERVER_TARGET): $(SERVER_OBJS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $^ $(LIBS) $(LDFLAGS) 
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $^ $(LIBS) $(LDFLAGS)
+
+$(CLIENT_TARGET): $(CLIENT_OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $^ $(LIBS) $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
